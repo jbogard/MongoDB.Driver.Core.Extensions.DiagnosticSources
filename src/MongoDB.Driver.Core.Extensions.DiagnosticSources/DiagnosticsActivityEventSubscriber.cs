@@ -23,6 +23,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 bindingFlags: BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
+        public DiagnosticsActivityEventSubscriber()
+            : this(new DiagnosticListener(ActivityName))
+        {
+        }
+
         public bool TryGetEventHandler<TEvent>(out Action<TEvent> handler)
             => _subscriber.TryGetEventHandler(out handler);
 
