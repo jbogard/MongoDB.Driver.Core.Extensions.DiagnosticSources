@@ -33,4 +33,5 @@ exec { & dotnet build -c Release }
 exec { & dotnet test -c Release -r $artifacts --no-build -l trx --verbosity=normal }
 
 exec { & dotnet pack .\src\MongoDB.Driver.Core.Extensions.DiagnosticSources\MongoDB.Driver.Core.Extensions.DiagnosticSources.csproj -c Release -o $artifacts --include-symbols -p:SymbolPackageFormat=snupkg --no-build }
+exec { & dotnet pack .\src\MongoDB.Driver.Core.Extensions.OpenTelemetry\MongoDB.Driver.Core.Extensions.OpenTelemetry.csproj -c Release -o $artifacts --include-symbols -p:SymbolPackageFormat=snupkg --no-build }
 
