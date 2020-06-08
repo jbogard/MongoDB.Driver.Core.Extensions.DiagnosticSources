@@ -91,12 +91,6 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
             }
 
             span.SetAttribute("db.statement", message.Command.ToString());
-
-            foreach (var baggageItem in activity.Baggage)
-            {
-                span.SetAttribute(baggageItem.Key, baggageItem.Value);
-            }
-
         }
     }
 }
