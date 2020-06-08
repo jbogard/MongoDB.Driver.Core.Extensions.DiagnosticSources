@@ -30,7 +30,7 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
                 SpanKind.Client,
                 out var span);
 
-            SetSpanAttributes(span, message);
+            SetSpanAttributes(span, activity, message);
 
             _spanMap.TryAdd(message.RequestId, span);
         }
@@ -72,7 +72,7 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
             span.SetAttribute("error.stack", message.Failure.StackTrace);
         }
 
-        private static void SetSpanAttributes(TelemetrySpan span, CommandStartedEvent message)
+        private static void SetSpanAttributes(TelemetrySpan span, Activity activity, CommandStartedEvent message)
         {
             span.SetAttribute("db.type", "mongo");
             span.SetAttribute("db.instance", message.DatabaseNamespace.DatabaseName);
@@ -91,6 +91,12 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
             }
 
             span.SetAttribute("db.statement", message.Command.ToString());
+
+            foreach (var baggageItem in activity.Baggage)
+            {
+                span.SetAttribute(baggageItem.Key, baggageItem.Value);
+            }
+
         }
     }
 }
