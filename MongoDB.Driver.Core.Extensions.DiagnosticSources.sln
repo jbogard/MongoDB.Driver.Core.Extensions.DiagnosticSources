@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		Build.ps1 = Build.ps1
 		.github\workflows\ci.yml = .github\workflows\ci.yml
+		Directory.Build.props = Directory.Build.props
 		.github\workflows\pr.yml = .github\workflows\pr.yml
 		Push.ps1 = Push.ps1
 		README.md = README.md
@@ -22,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D0F082F3
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests", "tests\MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests\MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests.csproj", "{E3A7C9FC-459B-471D-BB3A-512DD0356F2C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Driver.Core.Extensions.OpenTelemetry", "src\MongoDB.Driver.Core.Extensions.OpenTelemetry\MongoDB.Driver.Core.Extensions.OpenTelemetry.csproj", "{A885B9BC-298D-45D9-B770-870D2538B70F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.OpenTelemetry", "src\MongoDB.Driver.Core.Extensions.OpenTelemetry\MongoDB.Driver.Core.Extensions.OpenTelemetry.csproj", "{A885B9BC-298D-45D9-B770-870D2538B70F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
