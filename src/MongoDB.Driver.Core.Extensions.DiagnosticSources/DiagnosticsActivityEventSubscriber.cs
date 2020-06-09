@@ -38,6 +38,8 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             var activity = new Activity(ActivityName);
 
+            _diagnosticListener.OnActivityExport(activity, @event);
+
             if (_diagnosticListener.IsEnabled(ActivityStartEventName, @event))
             {
                 _diagnosticListener.StartActivity(activity, @event);
