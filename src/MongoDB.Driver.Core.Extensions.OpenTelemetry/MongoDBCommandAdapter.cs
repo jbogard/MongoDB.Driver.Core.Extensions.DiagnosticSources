@@ -10,9 +10,9 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry
     {
         private readonly DiagnosticSourceSubscriber _diagnosticSourceSubscriber;
 
-        public MongoDBCommandAdapter(Tracer tracer)
+        public MongoDBCommandAdapter(Tracer tracer, MongoDBInstrumentationOptions options)
         {
-            _diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new CommandListener(DiagnosticsActivityEventSubscriber.ActivityName, tracer), null);
+            _diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new CommandListener(DiagnosticsActivityEventSubscriber.ActivityName, tracer, options), null);
             _diagnosticSourceSubscriber.Subscribe();
         }
 

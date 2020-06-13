@@ -9,10 +9,11 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
 {
     internal class CommandListener : ListenerHandler
     {
-        public CommandListener(string sourceName, Tracer tracer)
-            : base(sourceName, tracer)
-        {
-        }
+        private readonly MongoDBInstrumentationOptions _options;
+
+        public CommandListener(string sourceName, Tracer tracer, MongoDBInstrumentationOptions options)
+            : base(sourceName, tracer) 
+            => _options = options;
 
         private readonly ConcurrentDictionary<int, TelemetrySpan> _spanMap
             = new ConcurrentDictionary<int, TelemetrySpan>();
@@ -72,7 +73,7 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
             span.SetAttribute("error.stack", message.Failure.StackTrace);
         }
 
-        private static void SetSpanAttributes(TelemetrySpan span, Activity activity, CommandStartedEvent message)
+        private void SetSpanAttributes(TelemetrySpan span, Activity activity, CommandStartedEvent message)
         {
             span.SetAttribute("db.type", "mongo");
             span.SetAttribute("db.instance", message.DatabaseNamespace.DatabaseName);
@@ -90,7 +91,10 @@ namespace MongoDB.Driver.Core.Extensions.OpenTelemetry.Implementation
                 span.SetAttribute("net.peer.port", dnsEndPoint.Port);
             }
 
-            span.SetAttribute("db.statement", message.Command.ToString());
+            if (_options.CaptureCommandText)
+            {
+                span.SetAttribute("db.statement", message.Command.ToString());
+            }
         }
     }
 }
