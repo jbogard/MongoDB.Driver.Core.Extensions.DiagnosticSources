@@ -47,4 +47,18 @@ services.AddOpenTelemetry(builder => {
 });
 ```
 
-This package supports the latest released alpha package on NuGet.
+By default, the command text is not logged. To change this, configure the options:
+
+```csharp
+services.AddOpenTelemetry(builder => {
+    builder
+        // Configure exporters
+        .UseZipkin()
+        // Configure adapters
+        .UseRequestAdapter()
+        .UseDependencyAdapter()
+        .AddMongoDBAdapter(opt => opt.CaptureCommandText = true); // Adds MongoDB OTel support
+});
+```
+
+This package supports the latest released OpenTelemetry alpha package on NuGet.
