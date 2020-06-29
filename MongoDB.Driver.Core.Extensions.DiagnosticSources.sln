@@ -13,11 +13,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\pr.yml = .github\workflows\pr.yml
 		Push.ps1 = Push.ps1
 		README.md = README.md
+		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.DiagnosticSources", "src\MongoDB.Driver.Core.Extensions.DiagnosticSources\MongoDB.Driver.Core.Extensions.DiagnosticSources.csproj", "{12DC230A-705A-4FF4-A9A4-DAFDC13016E7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2DBDEB21-11CF-471D-A456-59BDABB6D6D8}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D0F082F3-A6D0-4AFF-9391-4F3FFC15CDF9}"
 EndProject
