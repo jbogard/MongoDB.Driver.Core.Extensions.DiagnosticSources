@@ -18,15 +18,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.DiagnosticSources", "src\MongoDB.Driver.Core.Extensions.DiagnosticSources\MongoDB.Driver.Core.Extensions.DiagnosticSources.csproj", "{12DC230A-705A-4FF4-A9A4-DAFDC13016E7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2DBDEB21-11CF-471D-A456-59BDABB6D6D8}"
-	ProjectSection(SolutionItems) = preProject
-		src\Directory.Build.props = src\Directory.Build.props
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D0F082F3-A6D0-4AFF-9391-4F3FFC15CDF9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests", "tests\MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests\MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests.csproj", "{E3A7C9FC-459B-471D-BB3A-512DD0356F2C}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDB.Driver.Core.Extensions.OpenTelemetry", "src\MongoDB.Driver.Core.Extensions.OpenTelemetry\MongoDB.Driver.Core.Extensions.OpenTelemetry.csproj", "{A885B9BC-298D-45D9-B770-870D2538B70F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,18 +57,6 @@ Global
 		{E3A7C9FC-459B-471D-BB3A-512DD0356F2C}.Release|x64.Build.0 = Release|Any CPU
 		{E3A7C9FC-459B-471D-BB3A-512DD0356F2C}.Release|x86.ActiveCfg = Release|Any CPU
 		{E3A7C9FC-459B-471D-BB3A-512DD0356F2C}.Release|x86.Build.0 = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|x64.Build.0 = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Debug|x86.Build.0 = Debug|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|x64.ActiveCfg = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|x64.Build.0 = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|x86.ActiveCfg = Release|Any CPU
-		{A885B9BC-298D-45D9-B770-870D2538B70F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,7 +64,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{12DC230A-705A-4FF4-A9A4-DAFDC13016E7} = {2DBDEB21-11CF-471D-A456-59BDABB6D6D8}
 		{E3A7C9FC-459B-471D-BB3A-512DD0356F2C} = {D0F082F3-A6D0-4AFF-9391-4F3FFC15CDF9}
-		{A885B9BC-298D-45D9-B770-870D2538B70F} = {2DBDEB21-11CF-471D-A456-59BDABB6D6D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FC4D03ED-724C-4C3B-903F-42E5A7CECB8C}

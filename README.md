@@ -1,17 +1,17 @@
 # MongoDB.Driver.Core.Extensions.DiagnosticSources
 
 ![CI](https://github.com/jbogard/MongoDB.Driver.Core.Extensions.DiagnosticSources/workflows/CI/badge.svg)
+[![NuGet](https://img.shields.io/nuget/dt/MongoDB.Driver.Core.Extensions.DiagnosticSources.svg)](https://www.nuget.org/packages/MongoDB.Driver.Core.Extensions.DiagnosticSources) 
+[![NuGet](https://img.shields.io/nuget/vpre/MongoDB.Driver.Core.Extensions.DiagnosticSources.svg)](https://www.nuget.org/packages/MongoDB.Driver.Core.Extensions.DiagnosticSources)
+[![MyGet (dev)](https://img.shields.io/myget/jbogard-ci/v/MongoDB.Driver.Core.Extensions.DiagnosticSources.svg)](https://myget.org/gallery/jbogard-ci)
 
 ## Usage
 
-This repo includes two packages:
+This repo includes the package:
 
  - [MongoDB.Driver.Core.Extensions.DiagnosticSources](https://www.nuget.org/packages/MongoDB.Driver.Core.Extensions.DiagnosticSources/)
- - [MongoDB.Driver.Core.Extensions.OpenTelemetry](https://www.nuget.org/packages/MongoDB.Driver.Core.Extensions.OpenTelemetry/)
- 
-The `MongoDB.Driver.Core.Extensions.DiagnosticSources` package extends the core MongoDB C# driver to expose telemetry information via `System.Diagnostics`.
 
-The `MongoDB.Driver.Core.Extensions.OpenTelemetry` package provides adapters to [OpenTelemetry](https://opentelemetry.io/).
+The `MongoDB.Driver.Core.Extensions.DiagnosticSources` package extends the core MongoDB C# driver to expose telemetry information via `System.Diagnostics`.
 
 To use `MongoDB.Driver.Core.Extensions.DiagnosticSources`, you need to configure your `MongoClientSettings` to add this MongoDB event subscriber:
 
@@ -31,34 +31,3 @@ The following MongoDB events are exposed via `DiagnosticListener` events, with t
  
  This package supports MongoDB C# Driver versions 2.3 to 3.0.
 
-## OpenTelemetry usage
-
-Once you've configured your MongoDB client to expose diagnostics events as above, you can configure OpenTelemetry (typically through the [OpenTelemetry.Extensions.Hosting](https://www.nuget.org/packages/OpenTelemetry.Extensions.Hosting/0.2.0-alpha.275) package).
-
-```csharp
-services.AddOpenTelemetry(builder => {
-    builder
-        // Configure exporters
-        .UseZipkin()
-        // Configure adapters
-        .UseRequestAdapter()
-        .UseDependencyAdapter()
-        .AddMongoDBAdapter(); // Adds MongoDB OTel support
-});
-```
-
-By default, the command text is not logged. To change this, configure the options:
-
-```csharp
-services.AddOpenTelemetry(builder => {
-    builder
-        // Configure exporters
-        .UseZipkin()
-        // Configure adapters
-        .UseRequestAdapter()
-        .UseDependencyAdapter()
-        .AddMongoDBAdapter(opt => opt.CaptureCommandText = true); // Adds MongoDB OTel support
-});
-```
-
-This package supports the latest released OpenTelemetry alpha package on NuGet.
