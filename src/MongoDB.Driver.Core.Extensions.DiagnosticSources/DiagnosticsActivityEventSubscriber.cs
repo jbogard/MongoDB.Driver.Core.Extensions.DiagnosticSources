@@ -58,6 +58,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
                 {
+                    Activity.Current ??= activity;
                     _diagnosticListener.StopActivity(activity, @event);
                 }
                 else
@@ -73,6 +74,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
                 {
+                    Activity.Current ??= activity;
                     _diagnosticListener.Write(ActivityExceptionEventName, @event);
                 }
                 activity.Stop();
