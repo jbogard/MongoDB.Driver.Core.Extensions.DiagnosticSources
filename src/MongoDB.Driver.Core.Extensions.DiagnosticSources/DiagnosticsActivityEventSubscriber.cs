@@ -56,34 +56,47 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
+                WithReplacedActivityCurrent(activity, () =>
                 {
-                    var temp = Activity.Current;
-                    Activity.Current = activity;
-                    _diagnosticListener.StopActivity(activity, @event);
-                    Activity.Current = temp;
-                }
-                else
-                {
-                    activity.Stop();
-                }
+                    if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
+                    {
+                        _diagnosticListener.StopActivity(activity, @event);
+                    }
+                    else
+                    {
+                        activity.Stop();
+                    }
+                });
             }
         }
-
+        
         private void Handle(CommandFailedEvent @event)
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
+                WithReplacedActivityCurrent(activity, () =>
                 {
-                    var temp = Activity.Current;
-                    Activity.Current = activity;
-                    _diagnosticListener.Write(ActivityExceptionEventName, @event);
-                    Activity.Current = temp;
-                }
-                activity.Stop();
+                    if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
+                    {
+                        _diagnosticListener.Write(ActivityExceptionEventName, @event);
+                    }
+                    activity.Stop();
+                });
+            }
+        }
+
+        private void WithReplacedActivityCurrent(Activity activity, Action action)
+        {
+            var current = Activity.Current;
+            try
+            {
+                Activity.Current = activity;
+                action();
+            }
+            finally
+            {
+                Activity.Current = current;
             }
         }
     }
-
 }
