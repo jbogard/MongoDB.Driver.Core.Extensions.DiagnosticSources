@@ -58,7 +58,10 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
                 {
+                    var temp = Activity.Current;
+                    Activity.Current = activity;
                     _diagnosticListener.StopActivity(activity, @event);
+                    Activity.Current = temp;
                 }
                 else
                 {
@@ -73,7 +76,10 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
                 {
+                    var temp = Activity.Current;
+                    Activity.Current = activity;
                     _diagnosticListener.Write(ActivityExceptionEventName, @event);
+                    Activity.Current = temp;
                 }
                 activity.Stop();
             }

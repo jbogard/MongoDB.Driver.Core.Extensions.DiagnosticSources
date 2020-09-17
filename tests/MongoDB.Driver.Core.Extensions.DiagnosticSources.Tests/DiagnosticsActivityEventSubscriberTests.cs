@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -214,7 +215,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             outerActivity.Stop();
 
-            activities.Count.ShouldBe(4);
+            activities.Count(activity => activity != null && activity.OperationName == DiagnosticsActivityEventSubscriber.ActivityName).ShouldBe(4);
 
             Activity.Current.ShouldBeNull();
         }
