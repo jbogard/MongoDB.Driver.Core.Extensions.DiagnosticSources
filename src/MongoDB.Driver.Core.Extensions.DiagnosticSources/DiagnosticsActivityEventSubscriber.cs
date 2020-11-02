@@ -56,14 +56,17 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
+                WithReplacedActivityCurrent(activity, () =>
                 {
-                    _diagnosticListener.StopActivity(activity, @event);
-                }
-                else
-                {
-                    activity.Stop();
-                }
+                    if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
+                    {
+                        _diagnosticListener.StopActivity(activity, @event);
+                    }
+                    else
+                    {
+                        activity.Stop();
+                    }
+                });
             }
         }
 
@@ -71,11 +74,28 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
+                WithReplacedActivityCurrent(activity, () =>
                 {
-                    _diagnosticListener.Write(ActivityExceptionEventName, @event);
-                }
-                activity.Stop();
+                    if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
+                    {
+                        _diagnosticListener.Write(ActivityExceptionEventName, @event);
+                    }
+                    activity.Stop();
+                });
+            }
+        }
+        
+        private static void WithReplacedActivityCurrent(Activity activity, Action action)
+        {
+            var current = Activity.Current;
+            try
+            {
+                Activity.Current = activity;
+                action();
+            }
+            finally
+            {
+                Activity.Current = current;
             }
         }
     }
