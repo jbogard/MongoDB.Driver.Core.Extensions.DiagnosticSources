@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
 using System.Reflection;
 using MongoDB.Driver.Core.Events;
 
@@ -8,45 +9,64 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 {
     public class DiagnosticsActivityEventSubscriber : IEventSubscriber
     {
+        private readonly InstrumentationOptions _options;
+        internal static readonly AssemblyName AssemblyName = typeof(DiagnosticsActivityEventSubscriber).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+
         public const string ActivityName = "MongoDB.Driver.Core.Events.Command";
-        private const string ActivityStartEventName = ActivityName + ".Start";
-        private const string ActivityStopEventName = ActivityName + ".Stop";
-        private const string ActivityExceptionEventName = ActivityName + ".Exception";
 
-        private readonly DiagnosticListener _diagnosticListener;
         private readonly ReflectionEventSubscriber _subscriber;
+        private readonly ConcurrentDictionary<int, Activity> _activityMap = new();
 
-        public DiagnosticsActivityEventSubscriber(DiagnosticListener diagnosticListener)
+        public DiagnosticsActivityEventSubscriber() : this(new InstrumentationOptions { CaptureCommandText = false })
         {
-            _diagnosticListener = diagnosticListener;
-            _subscriber = new ReflectionEventSubscriber(this,
-                bindingFlags: BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        public DiagnosticsActivityEventSubscriber()
-            : this(new DiagnosticListener(ActivityName))
+        public DiagnosticsActivityEventSubscriber(InstrumentationOptions options)
         {
+            _options = options;
+            _subscriber = new ReflectionEventSubscriber(this, bindingFlags: BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
         public bool TryGetEventHandler<TEvent>(out Action<TEvent> handler)
             => _subscriber.TryGetEventHandler(out handler);
 
-        private readonly ConcurrentDictionary<int, Activity> _activityMap
-            = new ConcurrentDictionary<int, Activity>();
-
         private void Handle(CommandStartedEvent @event)
         {
-            var activity = new Activity(ActivityName);
+            var activity = ActivitySource.StartActivity(ActivityName, ActivityKind.Client);
 
-            _diagnosticListener.OnActivityExport(activity, @event);
-
-            if (_diagnosticListener.IsEnabled(ActivityStartEventName, @event))
+            if (activity == null)
             {
-                _diagnosticListener.StartActivity(activity, @event);
+                return;
             }
-            else
+
+            activity.DisplayName = $"mongodb.{@event.CommandName}";
+
+            if (activity.IsAllDataRequested)
             {
-                activity.Start();
+                activity.AddTag("db.type", "mongo");
+                activity.AddTag("db.instance", @event.DatabaseNamespace.DatabaseName);
+                var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
+                switch (endPoint)
+                {
+                    case IPEndPoint ipEndPoint:
+                        activity.AddTag("db.user", $"mongodb://{ipEndPoint.Address}:{ipEndPoint.Port}");
+                        activity.AddTag("net.peer.ip", ipEndPoint.Address.ToString());
+                        activity.AddTag("net.peer.port", ipEndPoint.Port.ToString());
+                        break;
+                    case DnsEndPoint dnsEndPoint:
+                        activity.AddTag("db.user", $"mongodb://{dnsEndPoint.Host}:{dnsEndPoint.Port}");
+                        activity.AddTag("net.peer.name", dnsEndPoint.Host);
+                        activity.AddTag("net.peer.port", dnsEndPoint.Port.ToString());
+                        break;
+                }
+
+                if (_options.CaptureCommandText)
+                {
+                    activity.AddTag("db.statement", @event.Command.ToString());
+                }
             }
 
             _activityMap.TryAdd(@event.RequestId, activity);
@@ -57,15 +77,9 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
                 WithReplacedActivityCurrent(activity, () =>
-                {
-                    if (_diagnosticListener.IsEnabled(ActivityStopEventName, @event))
-                    {
-                        _diagnosticListener.StopActivity(activity, @event);
-                    }
-                    else
-                    {
-                        activity.Stop();
-                    }
+                { 
+                    activity.AddTag("otel.status_code", "Ok");
+                    activity.Stop();
                 });
             }
         }
@@ -76,10 +90,15 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 WithReplacedActivityCurrent(activity, () =>
                 {
-                    if (_diagnosticListener.IsEnabled(ActivityExceptionEventName, @event))
+                    if (activity.IsAllDataRequested)
                     {
-                        _diagnosticListener.Write(ActivityExceptionEventName, @event);
+                        activity.AddTag("otel.status_code", "Error");
+                        activity.AddTag("otel.status_description", @event.Failure.Message);
+                        activity.AddTag("error.type", @event.Failure.GetType().FullName);
+                        activity.AddTag("error.msg", @event.Failure.Message);
+                        activity.AddTag("error.stack", @event.Failure.StackTrace);
                     }
+
                     activity.Stop();
                 });
             }
