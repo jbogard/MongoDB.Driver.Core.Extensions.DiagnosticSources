@@ -24,27 +24,19 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         [Fact]
         public void Should_not_fire_activity_start_stop_when_no_listener_attached()
         {
-            var diagnosticListener = new DiagnosticListener("DummySource");
             var stopFired = false;
             var startFired = false;
 
-            diagnosticListener.Subscribe(new CallbackDiagnosticListener(pair =>
-                {
-                    // This should not fire
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Start")
-                    {
-                        startFired = true;
-                    }
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "Nonsense",
+                ActivityStarted = _ => startFired = true,
+                ActivityStopped = _ => stopFired = true
+            };
 
-                    // This should not fire
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Stop")
-                    {
-                        stopFired = true;
-                    }
-                }),
-                (s, o, arg3) => false);
+            ActivitySource.AddActivityListener(listener);
 
-            var behavior = new DiagnosticsActivityEventSubscriber(diagnosticListener);
+            var behavior = new DiagnosticsActivityEventSubscriber();
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
@@ -57,28 +49,21 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         }
 
         [Fact]
-        public void Should_fire_activity_start_stop_when_listener_attached()
+        public void Should_fire_activity_start_stop_when_sampling()
         {
-            var diagnosticListener = new DiagnosticListener("DummySource");
             var stopFired = false;
             var startFired = false;
 
-            diagnosticListener.Subscribe(new CallbackDiagnosticListener(pair =>
-                {
-                    // This should not fire
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Start")
-                    {
-                        startFired = true;
-                    }
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+                ActivityStarted = _ => startFired = true,
+                ActivityStopped = _ => stopFired = true
+            };
+            ActivitySource.AddActivityListener(listener);
 
-                    // This should not fire
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Stop")
-                    {
-                        stopFired = true;
-                    }
-                }));
-
-            var behavior = new DiagnosticsActivityEventSubscriber(diagnosticListener);
+            var behavior = new DiagnosticsActivityEventSubscriber();
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
@@ -94,32 +79,29 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         [Fact]
         public void Should_start_and_log_successful_activity()
         {
-            var diagnosticListener = new DiagnosticListener("DummySource");
             var stopFired = false;
             var startFired = false;
 
-            diagnosticListener.Subscribe(new CallbackDiagnosticListener(pair =>
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+                ActivityStarted = activity =>
                 {
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Start")
-                    {
-                        startFired = true;
-                        pair.Value.ShouldNotBeNull();
-                        Activity.Current.ShouldNotBeNull();
-                        Activity.Current.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                        pair.Value.ShouldBeAssignableTo<CommandStartedEvent>();
-                    }
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
 
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Stop")
-                    {
-                        stopFired = true;
-                        pair.Value.ShouldNotBeNull();
-                        Activity.Current.ShouldNotBeNull();
-                        Activity.Current.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                        pair.Value.ShouldBeAssignableTo<CommandSucceededEvent>();
-                    }
-                }));
-
-            var behavior = new DiagnosticsActivityEventSubscriber(diagnosticListener);
+            var behavior = new DiagnosticsActivityEventSubscriber();
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
@@ -135,38 +117,40 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         [Fact]
         public void Should_start_and_log_failed_activity()
         {
-            var diagnosticListener = new DiagnosticListener("DummySource");
             var exceptionFired = false;
             var startFired = false;
 
-            diagnosticListener.Subscribe(new CallbackDiagnosticListener(pair =>
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {   
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                },
+                ActivityStopped = activity =>
                 {
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Start")
-                    {
-                        startFired = true;
-                        pair.Value.ShouldNotBeNull();
-                        Activity.Current.ShouldNotBeNull();
-                        Activity.Current.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                        pair.Value.ShouldBeAssignableTo<CommandStartedEvent>();
-                    }
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var statusTag = activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code");
+                    statusTag.ShouldNotBe(default);
+                    statusTag.Value.ShouldBe("Error");
+                    exceptionFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
 
-                    if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Exception")
-                    {
-                        exceptionFired = true;
-                        pair.Value.ShouldNotBeNull();
-                        Activity.Current.ShouldNotBeNull();
-                        Activity.Current.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                        pair.Value.ShouldBeAssignableTo<CommandFailedEvent>();
-                    }
-                }));
-
-            var behavior = new DiagnosticsActivityEventSubscriber(diagnosticListener);
+            var behavior = new DiagnosticsActivityEventSubscriber();
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandFailedEvent>(out var stopEvent).ShouldBeTrue();
 
-            startEvent(new CommandStartedEvent());
-            stopEvent(new CommandFailedEvent());
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandFailedEvent("update", new Exception("Failed"), null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             exceptionFired.ShouldBeTrue();
@@ -174,30 +158,108 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         }
 
         [Fact]
+        public void Should_record_all_data()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var instanceTag = activity.Tags.SingleOrDefault(t => t.Key == "db.instance");
+                    instanceTag.ShouldNotBe(default);
+                    instanceTag.Value.ShouldBe("test");
+
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
+
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {CaptureCommandText = false};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", new BsonDocument(), null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }
+     
+        [Fact]
+        public void Should_record_command_text_when_option_set()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
+                    statementTag.ShouldNotBe(default);
+                    statementTag.Value.ShouldBe("{ }");
+
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {CaptureCommandText = true};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", new BsonDocument(), null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }
+
+        [Fact]
         public void Should_handle_parallel_activities()
         {
-            var diagnosticListener = new DiagnosticListener("DummySource");
-
             var activities = new List<Activity>();
 
-            diagnosticListener.Subscribe(new CallbackDiagnosticListener(pair =>
+            using var listener = new ActivityListener
             {
-                if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Start")
-                {
-                    pair.Value.ShouldNotBeNull();
-                    pair.Value.ShouldBeAssignableTo<CommandStartedEvent>();
-                    activities.Add(Activity.Current);
-                }
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+                ActivityStarted = _ => activities.Add(Activity.Current),
+                ActivityStopped = _ => activities.Add(Activity.Current)
+            };
+            ActivitySource.AddActivityListener(listener);
 
-                if (pair.Key == $"{DiagnosticsActivityEventSubscriber.ActivityName}.Stop")
-                {
-                    pair.Value.ShouldNotBeNull();
-                    pair.Value.ShouldBeAssignableTo<CommandSucceededEvent>();
-                    activities.Add(Activity.Current);
-                }
-            }));
-
-            var behavior = new DiagnosticsActivityEventSubscriber(diagnosticListener);
+            var behavior = new DiagnosticsActivityEventSubscriber();
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
