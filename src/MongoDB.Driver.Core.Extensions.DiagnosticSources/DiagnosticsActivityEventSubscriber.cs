@@ -63,32 +63,31 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 return;
             }
 
-            activity.DisplayName = $"mongodb.{@event.CommandName}";
+            var collectionName = GetCollectionName(@event);
 
-            if (activity.IsAllDataRequested)
+            activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
+
+            activity.AddTag("db.system", "mongo");
+            activity.AddTag("db.instance", @event.DatabaseNamespace?.DatabaseName);
+            activity.AddTag("db.mongodb.collection", collectionName);
+            var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
+            switch (endPoint)
             {
-                activity.AddTag("db.system", "mongo");
-                activity.AddTag("db.instance", @event.DatabaseNamespace.DatabaseName);
-;               activity.AddTag("db.mongodb.collection", GetCollectionName(@event));
-                var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
-                switch (endPoint)
-                {
-                    case IPEndPoint ipEndPoint:
-                        activity.AddTag("db.user", $"mongodb://{ipEndPoint.Address}:{ipEndPoint.Port}");
-                        activity.AddTag("net.peer.ip", ipEndPoint.Address.ToString());
-                        activity.AddTag("net.peer.port", ipEndPoint.Port.ToString());
-                        break;
-                    case DnsEndPoint dnsEndPoint:
-                        activity.AddTag("db.user", $"mongodb://{dnsEndPoint.Host}:{dnsEndPoint.Port}");
-                        activity.AddTag("net.peer.name", dnsEndPoint.Host);
-                        activity.AddTag("net.peer.port", dnsEndPoint.Port.ToString());
-                        break;
-                }
+                case IPEndPoint ipEndPoint:
+                    activity.AddTag("db.user", $"mongodb://{ipEndPoint.Address}:{ipEndPoint.Port}");
+                    activity.AddTag("net.peer.ip", ipEndPoint.Address.ToString());
+                    activity.AddTag("net.peer.port", ipEndPoint.Port.ToString());
+                    break;
+                case DnsEndPoint dnsEndPoint:
+                    activity.AddTag("db.user", $"mongodb://{dnsEndPoint.Host}:{dnsEndPoint.Port}");
+                    activity.AddTag("net.peer.name", dnsEndPoint.Host);
+                    activity.AddTag("net.peer.port", dnsEndPoint.Port.ToString());
+                    break;
+            }
 
-                if (_options.CaptureCommandText)
-                {
-                    activity.AddTag("db.statement", @event.Command.ToString());
-                }
+            if (activity.IsAllDataRequested && _options.CaptureCommandText)
+            {
+                activity.AddTag("db.statement", @event.Command.ToString());
             }
 
             _activityMap.TryAdd(@event.RequestId, activity);

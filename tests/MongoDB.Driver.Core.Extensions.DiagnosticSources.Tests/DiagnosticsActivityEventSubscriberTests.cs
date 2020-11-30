@@ -149,7 +149,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
             var databaseNamespace = new DatabaseNamespace("test");
-            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
             stopEvent(new CommandFailedEvent("update", new Exception("Failed"), null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
@@ -195,8 +199,12 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
             var databaseNamespace = new DatabaseNamespace("test");
-            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
-            stopEvent(new CommandSucceededEvent("update", new BsonDocument(), null, 1, connectionId, TimeSpan.Zero));
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
@@ -207,6 +215,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
         {
             var stopFired = false;
             var startFired = false;
+
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
 
             using var listener = new ActivityListener
             {
@@ -223,7 +236,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
                     var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
                     statementTag.ShouldNotBe(default);
-                    statementTag.Value.ShouldBe("{ }");
+                    statementTag.Value.ShouldBe(command.ToString());
 
                     stopFired = true;
                 }
@@ -238,8 +251,8 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
             var databaseNamespace = new DatabaseNamespace("test");
-            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
-            stopEvent(new CommandSucceededEvent("update", new BsonDocument(), null, 1, connectionId, TimeSpan.Zero));
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
@@ -269,10 +282,18 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
             var databaseNamespace = new DatabaseNamespace("test");
-            startEvent(new CommandStartedEvent("update", new BsonDocument(), databaseNamespace, null, 1, connectionId));
-            startEvent(new CommandStartedEvent("insert", new BsonDocument(), databaseNamespace, null, 2, connectionId));
-            stopEvent(new CommandSucceededEvent("update", new BsonDocument(), null, 1, connectionId, TimeSpan.Zero));
-            stopEvent(new CommandSucceededEvent("insert", new BsonDocument(), null, 2, connectionId, TimeSpan.Zero));
+            var updateCommand = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+            var insertCommand = new BsonDocument(new Dictionary<string, object>
+            {
+                {"insert", "my_collection"}
+            });
+            startEvent(new CommandStartedEvent("update", updateCommand, databaseNamespace, null, 1, connectionId));
+            startEvent(new CommandStartedEvent("insert", insertCommand, databaseNamespace, null, 2, connectionId));
+            stopEvent(new CommandSucceededEvent("update", updateCommand, null, 1, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandSucceededEvent("insert", insertCommand, null, 2, connectionId, TimeSpan.Zero));
 
             outerActivity.Stop();
 
