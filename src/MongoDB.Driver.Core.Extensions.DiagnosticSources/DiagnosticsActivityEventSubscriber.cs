@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -19,6 +20,26 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
         private readonly ReflectionEventSubscriber _subscriber;
         private readonly ConcurrentDictionary<int, Activity> _activityMap = new();
+
+        private static readonly HashSet<string> CommandsWithCollectionNameAsValue =
+            new HashSet<string>
+            {
+                "aggregate",
+                "count",
+                "distinct",
+                "mapReduce",
+                "geoSearch",
+                "delete",
+                "find",
+                "killCursors",
+                "findAndModify",
+                "insert",
+                "update",
+                "create",
+                "drop",
+                "createIndexes",
+                "listIndexes"
+            };
 
         public DiagnosticsActivityEventSubscriber() : this(new InstrumentationOptions { CaptureCommandText = false })
         {
@@ -46,8 +67,9 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
             if (activity.IsAllDataRequested)
             {
-                activity.AddTag("db.type", "mongo");
+                activity.AddTag("db.system", "mongo");
                 activity.AddTag("db.instance", @event.DatabaseNamespace.DatabaseName);
+;               activity.AddTag("db.mongodb.collection", GetCollectionName(@event));
                 var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
                 switch (endPoint)
                 {
@@ -77,7 +99,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
                 WithReplacedActivityCurrent(activity, () =>
-                { 
+                {
                     activity.AddTag("otel.status_code", "Ok");
                     activity.Stop();
                 });
@@ -103,7 +125,32 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 });
             }
         }
-        
+
+        private static string GetCollectionName(CommandStartedEvent @event)
+        {
+            if (@event.CommandName == "getMore")
+            {
+                if (@event.Command.Contains("collection"))
+                {
+                    var collectionValue = @event.Command.GetValue("collection");
+                    if (collectionValue.IsString)
+                    {
+                        return collectionValue.AsString;
+                    }
+                }
+            }
+            else if (CommandsWithCollectionNameAsValue.Contains(@event.CommandName))
+            {
+                var commandValue = @event.Command.GetValue(@event.CommandName);
+                if (commandValue != null && commandValue.IsString)
+                {
+                    return commandValue.AsString;
+                }
+            }
+
+            return null;
+        }
+
         private static void WithReplacedActivityCurrent(Activity activity, Action action)
         {
             var current = Activity.Current;
