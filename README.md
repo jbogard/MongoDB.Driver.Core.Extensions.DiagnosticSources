@@ -21,13 +21,18 @@ clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityE
 var mongoClient = new MongoClient(clientSettings);
 ```
 
-That event subscriber exposes Activity events via a DiagnosticListener under the root activity name, `MongoDB.Driver.Core.Events.Command`. To subscribe, you may use the `DiagnosticListener.AllListeners` observable.
+To capture the command text as part of the activity:
 
-The following MongoDB events are exposed via `DiagnosticListener` events, with the corresponding MongoDB event object as the diagnostics event argument.
+```csharp
+var clientSettings = MongoClientSettings.FromUrl(mongoUrl);
+var options = new InstrumentationOptions { CaptureCommandText = true };
+clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityEventSubscriber(options));
+var mongoClient = new MongoClient(clientSettings);
+```
 
- - [CommandStartedEvent](http://mongodb.github.io/mongo-csharp-driver/2.8/apidocs/html/T_MongoDB_Driver_Core_Events_CommandStartedEvent.htm) - `MongoDB.Driver.Core.Events.Command.Start`
- - [CommandSucceededEvent](http://mongodb.github.io/mongo-csharp-driver/2.8/apidocs/html/T_MongoDB_Driver_Core_Events_CommandSucceededEvent.htm) - `MongoDB.Driver.Core.Events.Command.Stop`
- - [CommandFailedEvent](http://mongodb.github.io/mongo-csharp-driver/2.8/apidocs/html/T_MongoDB_Driver_Core_Events_CommandFailedEvent.htm) - `MongoDB.Driver.Core.Events.Command.Exception`
+This package exposes an [`ActivitySource`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitysource?view=net-5.0) with a `Name` the same as the assembly, `MongoDB.Driver.Core.Extensions.DiagnosticSources`. Use this name in any [`ActivityListener`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitylistener?view=net-5.0)-based listeners.
+
+All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md) are set.
  
- This package supports MongoDB C# Driver versions 2.3 to 3.0.
+This package supports MongoDB C# Driver versions 2.3 to 3.0.
 
