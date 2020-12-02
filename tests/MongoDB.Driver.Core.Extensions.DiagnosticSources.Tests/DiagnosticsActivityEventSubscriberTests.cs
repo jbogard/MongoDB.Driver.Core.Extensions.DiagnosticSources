@@ -180,10 +180,12 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                    var instanceTag = activity.Tags.SingleOrDefault(t => t.Key == "db.instance");
+                    var instanceTag = activity.Tags.SingleOrDefault(t => t.Key == "db.name");
                     instanceTag.ShouldNotBe(default);
                     instanceTag.Value.ShouldBe("test");
 
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.system").Value.ShouldBe("mongodb");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.operation").Value.ShouldBe("update");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
 
                     stopFired = true;

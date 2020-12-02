@@ -65,11 +65,13 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
             var collectionName = GetCollectionName(@event);
 
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
             activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
 
-            activity.AddTag("db.system", "mongo");
-            activity.AddTag("db.instance", @event.DatabaseNamespace?.DatabaseName);
+            activity.AddTag("db.system", "mongodb");
+            activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
             activity.AddTag("db.mongodb.collection", collectionName);
+            activity.AddTag("db.operation", @event.CommandName);
             var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
             switch (endPoint)
             {
