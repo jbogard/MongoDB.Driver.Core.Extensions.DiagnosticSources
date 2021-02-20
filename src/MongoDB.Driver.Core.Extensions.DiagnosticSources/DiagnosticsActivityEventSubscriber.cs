@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -21,26 +20,6 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         private readonly ReflectionEventSubscriber _subscriber;
         private readonly ConcurrentDictionary<int, Activity> _activityMap = new();
 
-        private static readonly HashSet<string> CommandsWithCollectionNameAsValue =
-            new HashSet<string>
-            {
-                "aggregate",
-                "count",
-                "distinct",
-                "mapReduce",
-                "geoSearch",
-                "delete",
-                "find",
-                "killCursors",
-                "findAndModify",
-                "insert",
-                "update",
-                "create",
-                "drop",
-                "createIndexes",
-                "listIndexes"
-            };
-
         public DiagnosticsActivityEventSubscriber() : this(new InstrumentationOptions { CaptureCommandText = false })
         {
         }
@@ -56,6 +35,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
         private void Handle(CommandStartedEvent @event)
         {
+            if (_options.Filter != null && !_options.Filter(@event))
+            {
+                return;
+            }
+
             var activity = ActivitySource.StartActivity(ActivityName, ActivityKind.Client);
 
             if (activity == null)
@@ -63,7 +47,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 return;
             }
 
-            var collectionName = GetCollectionName(@event);
+            var collectionName = @event.GetCollectionName();
 
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
             activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
@@ -127,31 +111,6 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             }
         }
 
-        private static string GetCollectionName(CommandStartedEvent @event)
-        {
-            if (@event.CommandName == "getMore")
-            {
-                if (@event.Command.Contains("collection"))
-                {
-                    var collectionValue = @event.Command.GetValue("collection");
-                    if (collectionValue.IsString)
-                    {
-                        return collectionValue.AsString;
-                    }
-                }
-            }
-            else if (CommandsWithCollectionNameAsValue.Contains(@event.CommandName))
-            {
-                var commandValue = @event.Command.GetValue(@event.CommandName);
-                if (commandValue != null && commandValue.IsString)
-                {
-                    return commandValue.AsString;
-                }
-            }
-
-            return null;
-        }
-
         private static void WithReplacedActivityCurrent(Activity activity, Action action)
         {
             var current = Activity.Current;
@@ -166,5 +125,4 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             }
         }
     }
-
 }

@@ -30,6 +30,15 @@ clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityE
 var mongoClient = new MongoClient(clientSettings);
 ```
 
+To filter activities by collection name:
+
+```csharp
+var clientSettings = MongoClientSettings.FromUrl(mongoUrl);
+var options = new InstrumentationOptions { Filter = @event => !"collectionToIgnore".Equals(@event.GetCollectionName()) };
+clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityEventSubscriber(options));
+var mongoClient = new MongoClient(clientSettings);
+```
+
 This package exposes an [`ActivitySource`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitysource?view=net-5.0) with a `Name` the same as the assembly, `MongoDB.Driver.Core.Extensions.DiagnosticSources`. Use this name in any [`ActivityListener`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitylistener?view=net-5.0)-based listeners.
 
 All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md) are set.

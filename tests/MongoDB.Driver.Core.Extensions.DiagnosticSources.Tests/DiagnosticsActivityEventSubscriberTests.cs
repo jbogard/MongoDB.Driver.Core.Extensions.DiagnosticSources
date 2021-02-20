@@ -13,7 +13,7 @@ using Xunit;
 
 namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 {
-    public class DiagnosticsActivityEventSubscriberTests 
+    public class DiagnosticsActivityEventSubscriberTests
     {
         static DiagnosticsActivityEventSubscriberTests()
         {
@@ -125,7 +125,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
                 Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
                 ActivityStarted = activity =>
-                {   
+                {
                     startFired = true;
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
@@ -302,6 +302,36 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             activities.Count(activity => activity != null && activity.OperationName == DiagnosticsActivityEventSubscriber.ActivityName).ShouldBe(4);
 
             Activity.Current.ShouldBeNull();
+        }
+
+        [InlineData(null, true)]
+        [InlineData(true, true)]
+        [InlineData(false, false)]
+        [Theory]
+        public void Should_fire_activity_when_filter_is_null_or_return_true_and_should_not_fire_when_filter_return_false(bool? filterResult, bool shouldFireActivity)
+        {
+            var activities = new List<Activity>();
+            var filter = filterResult == null
+                ? (Func<CommandStartedEvent, bool>)null
+                : x => filterResult.Value;
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+                ActivityStarted = _ => activities.Add(Activity.Current)
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var behavior = new DiagnosticsActivityEventSubscriber(new InstrumentationOptions {Filter = filter});
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            startEvent(new CommandStartedEvent());
+            stopEvent(new CommandSucceededEvent());
+
+            activities.Count.ShouldBe(shouldFireActivity ? 1 : 0);
         }
     }
 }
