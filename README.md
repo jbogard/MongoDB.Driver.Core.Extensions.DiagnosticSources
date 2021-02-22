@@ -34,7 +34,7 @@ To filter activities by collection name:
 
 ```csharp
 var clientSettings = MongoClientSettings.FromUrl(mongoUrl);
-var options = new InstrumentationOptions { Filter = @event => !"collectionToIgnore".Equals(@event.GetCollectionName()) };
+var options = new InstrumentationOptions { ShouldStartActivity = @event => !"collectionToIgnore".Equals(@event.GetCollectionName()) };
 clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityEventSubscriber(options));
 var mongoClient = new MongoClient(clientSettings);
 ```

@@ -35,7 +35,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
         private void Handle(CommandStartedEvent @event)
         {
-            if (_options.Filter != null && !_options.Filter(@event))
+            if (_options.ShouldStartActivity != null && !_options.ShouldStartActivity(@event))
             {
                 return;
             }

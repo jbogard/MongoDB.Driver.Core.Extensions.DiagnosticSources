@@ -323,7 +323,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             };
             ActivitySource.AddActivityListener(listener);
 
-            var behavior = new DiagnosticsActivityEventSubscriber(new InstrumentationOptions {Filter = filter});
+            var behavior = new DiagnosticsActivityEventSubscriber(new InstrumentationOptions {ShouldStartActivity = filter});
 
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
