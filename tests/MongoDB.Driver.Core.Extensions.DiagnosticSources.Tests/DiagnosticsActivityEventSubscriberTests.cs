@@ -333,5 +333,34 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             activities.Count.ShouldBe(shouldFireActivity ? 1 : 0);
         }
+
+        [Fact]
+        public void Should_fire_start_and_stop_events_to_diagnosticsource()
+        {
+            var eventNames = new List<string>();
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var diagnosticsObserver = new MongoDBDiagnosticObserver(pair => {
+                eventNames.Add(pair.Key);
+            });
+            IDisposable subscription = DiagnosticListener.AllListeners.Subscribe(diagnosticsObserver);
+
+            var behavior = new DiagnosticsActivityEventSubscriber();
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            startEvent(new CommandStartedEvent());
+            stopEvent(new CommandSucceededEvent());
+
+            eventNames.ShouldContain("MongoDB.Driver.Core.Events.Command.Start");
+            eventNames.ShouldContain("MongoDB.Driver.Core.Events.Command.Stop");
+        }
     }
 }

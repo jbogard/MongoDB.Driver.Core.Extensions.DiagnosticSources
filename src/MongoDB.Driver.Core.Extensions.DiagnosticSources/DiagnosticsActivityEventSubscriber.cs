@@ -14,6 +14,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+        internal static readonly DiagnosticSource DiagnosticSource = new DiagnosticListener(ActivitySourceName);
 
         public const string ActivityName = "MongoDB.Driver.Core.Events.Command";
 
@@ -45,6 +46,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             if (activity == null)
             {
                 return;
+            }
+
+            if (DiagnosticSource.IsEnabled(activity.OperationName))
+            {
+                DiagnosticSource.StartActivity(activity, @event);
             }
 
             var collectionName = @event.GetCollectionName();
@@ -86,7 +92,15 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 WithReplacedActivityCurrent(activity, () =>
                 {
                     activity.AddTag("otel.status_code", "Ok");
-                    activity.Stop();
+                    
+                    if (DiagnosticSource.IsEnabled(activity.OperationName))
+                    {
+                        DiagnosticSource.StopActivity(activity, null);
+                    }
+                    else
+                    {
+                        activity.Stop();
+                    }
                 });
             }
         }
@@ -106,7 +120,14 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                         activity.AddTag("error.stack", @event.Failure.StackTrace);
                     }
 
-                    activity.Stop();
+                    if (DiagnosticSource.IsEnabled(activity.OperationName))
+                    {
+                        DiagnosticSource.StopActivity(activity, null);
+                    }
+                    else
+                    {
+                        activity.Stop();
+                    }
                 });
             }
         }
