@@ -53,19 +53,20 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
 
             activity.AddTag("db.system", "mongodb");
+            activity.AddTag("db.connection_id", @event.ConnectionId?.ToString());
             activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
             activity.AddTag("db.mongodb.collection", collectionName);
             activity.AddTag("db.operation", @event.CommandName);
+            activity.AddTag("net.transport", "ip_tcp");
+
             var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
             switch (endPoint)
             {
                 case IPEndPoint ipEndPoint:
-                    activity.AddTag("db.user", $"mongodb://{ipEndPoint.Address}:{ipEndPoint.Port}");
-                    activity.AddTag("net.peer.ip", ipEndPoint.Address.ToString());
                     activity.AddTag("net.peer.port", ipEndPoint.Port.ToString());
+                    activity.AddTag("net.sock.peer.addr", ipEndPoint.Address.ToString());
                     break;
                 case DnsEndPoint dnsEndPoint:
-                    activity.AddTag("db.user", $"mongodb://{dnsEndPoint.Host}:{dnsEndPoint.Port}");
                     activity.AddTag("net.peer.name", dnsEndPoint.Host);
                     activity.AddTag("net.peer.port", dnsEndPoint.Port.ToString());
                     break;
@@ -85,7 +86,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 WithReplacedActivityCurrent(activity, () =>
                 {
-                    activity.AddTag("otel.status_code", "Ok");
+                    activity.AddTag("otel.status_code", "OK");
                     activity.Stop();
                 });
             }
@@ -99,11 +100,11 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.AddTag("otel.status_code", "Error");
+                        activity.AddTag("otel.status_code", "ERROR");
                         activity.AddTag("otel.status_description", @event.Failure.Message);
-                        activity.AddTag("error.type", @event.Failure.GetType().FullName);
-                        activity.AddTag("error.msg", @event.Failure.Message);
-                        activity.AddTag("error.stack", @event.Failure.StackTrace);
+                        activity.AddTag("exception.type", @event.Failure.GetType().FullName);
+                        activity.AddTag("exception.message", @event.Failure.Message);
+                        activity.AddTag("exception.stacktrace", @event.Failure.StackTrace);
                     }
 
                     activity.Stop();
