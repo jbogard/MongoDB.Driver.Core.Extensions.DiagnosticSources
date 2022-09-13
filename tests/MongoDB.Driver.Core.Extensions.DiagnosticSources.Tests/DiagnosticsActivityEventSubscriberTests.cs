@@ -136,7 +136,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
                     var statusTag = activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code");
                     statusTag.ShouldNotBe(default);
-                    statusTag.Value.ShouldBe("Error");
+                    statusTag.Value.ShouldBe("ERROR");
                     exceptionFired = true;
                 }
             };
@@ -185,8 +185,13 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     instanceTag.Value.ShouldBe("test");
 
                     activity.Tags.SingleOrDefault(t => t.Key == "db.system").Value.ShouldBe("mongodb");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.connection_id").Value.ShouldBe("{ ServerId : { ClusterId : 42, EndPoint : \"Unspecified/localhost:8000\" }, LocalValue : 43 }");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.mongodb.collection").Value.ShouldBe("my_collection");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.operation").Value.ShouldBe("update");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
+                    activity.Tags.SingleOrDefault(t => t.Key == "net.peer.name").Value.ShouldBe("localhost");
+                    activity.Tags.SingleOrDefault(t => t.Key == "net.peer.port").Value.ShouldBe("8000");
+                    activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code").Value.ShouldBe("OK");
 
                     stopFired = true;
                 }
@@ -199,7 +204,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
             behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
 
-            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(42), new DnsEndPoint("localhost", 8000)), 43);
             var databaseNamespace = new DatabaseNamespace("test");
             var command = new BsonDocument(new Dictionary<string, object>
             {
@@ -211,7 +216,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
         }
-     
+
         [Fact]
         public void Should_record_command_text_when_option_set()
         {
