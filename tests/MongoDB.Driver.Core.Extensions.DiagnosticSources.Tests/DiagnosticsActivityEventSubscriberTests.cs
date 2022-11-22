@@ -96,6 +96,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    activity.Status.ShouldBe(ActivityStatusCode.Ok);
                     stopFired = true;
                 }
             };
@@ -137,6 +138,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     var statusTag = activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code");
                     statusTag.ShouldNotBe(default);
                     statusTag.Value.ShouldBe("ERROR");
+                    activity.Status.ShouldBe(ActivityStatusCode.Error);
                     exceptionFired = true;
                 }
             };
