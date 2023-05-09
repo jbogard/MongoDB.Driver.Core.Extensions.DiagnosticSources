@@ -30,6 +30,15 @@ clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityE
 var mongoClient = new MongoClient(clientSettings);
 ```
 
+To capture the command text based on a predicate:
+
+```csharp
+var clientSettings = MongoClientSettings.FromUrl(mongoUrl);
+var options = new InstrumentationOptions { ShouldCaptureCommandText = @event => @event.CommandName == "find" };
+clientSettings.ClusterConfigurator = cb => cb.Subscribe(new DiagnosticsActivityEventSubscriber(options));
+var mongoClient = new MongoClient(clientSettings);
+```
+
 To filter activities by collection name:
 
 ```csharp

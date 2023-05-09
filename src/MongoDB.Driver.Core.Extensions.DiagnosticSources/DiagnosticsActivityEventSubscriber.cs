@@ -72,7 +72,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                     break;
             }
 
-            if (activity.IsAllDataRequested && (_options.CaptureCommandText || (_options.ShouldCaptureCommandText is not null && _options.ShouldCaptureCommandText.Invoke(@event))))
+            if (activity.IsAllDataRequested && (_options.CaptureCommandText || _options.ShouldCaptureCommandText?.Invoke(@event) == true))
             {
                 activity.AddTag("db.statement", @event.Command.ToString());
             }
