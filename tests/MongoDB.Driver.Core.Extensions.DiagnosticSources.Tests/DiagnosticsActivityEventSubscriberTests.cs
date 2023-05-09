@@ -265,6 +265,146 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
 
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
+        }        
+        
+        [Fact]
+        public void Should_record_command_text_when_callback_is_set_and_returns_true()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
+                    statementTag.ShouldNotBe(default);
+                    statementTag.Value.ShouldBe(command.ToString());
+
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {ShouldCaptureCommandText = c => c.CommandName == "update"};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }        
+        
+        [Fact]
+        public void Should_not_record_command_text_when_callback_is_set_and_returns_false()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
+                    statementTag.ShouldBe(default);
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {ShouldCaptureCommandText = c => c.CommandName != "update"};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }
+        
+        [Fact]
+        public void Should_record_command_text_when_option_and_callback_are_set_and_returns_false()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
+                    statementTag.ShouldBe(default);
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {ShouldCaptureCommandText = c => c.CommandName != "update"};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
+            var databaseNamespace = new DatabaseNamespace("test");
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
         }
 
         [Fact]
