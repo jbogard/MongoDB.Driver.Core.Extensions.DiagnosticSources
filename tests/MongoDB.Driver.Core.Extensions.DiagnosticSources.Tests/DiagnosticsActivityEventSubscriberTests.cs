@@ -191,8 +191,8 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     activity.Tags.SingleOrDefault(t => t.Key == "db.mongodb.collection").Value.ShouldBe("my_collection");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.operation").Value.ShouldBe("update");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
-                    activity.Tags.SingleOrDefault(t => t.Key == "net.peer.name").Value.ShouldBe("localhost");
-                    activity.Tags.SingleOrDefault(t => t.Key == "net.peer.port").Value.ShouldBe("8000");
+                    activity.Tags.SingleOrDefault(t => t.Key == "server.address").Value.ShouldBe("localhost");
+                    activity.Tags.SingleOrDefault(t => t.Key == "server.port").Value.ShouldBe("8000");
                     activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code").Value.ShouldBe("OK");
 
                     stopFired = true;

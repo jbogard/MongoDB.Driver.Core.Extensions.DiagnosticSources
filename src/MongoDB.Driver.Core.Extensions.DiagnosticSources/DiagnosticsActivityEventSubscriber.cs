@@ -57,18 +57,18 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
             activity.AddTag("db.mongodb.collection", collectionName);
             activity.AddTag("db.operation", @event.CommandName);
-            activity.AddTag("net.transport", "ip_tcp");
+            activity.AddTag("network.transport", "tcp");
 
             var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
             switch (endPoint)
             {
                 case IPEndPoint ipEndPoint:
-                    activity.AddTag("net.peer.port", ipEndPoint.Port.ToString());
-                    activity.AddTag("net.sock.peer.addr", ipEndPoint.Address.ToString());
+                    activity.AddTag("network.peer.address", ipEndPoint.Address.ToString());
+                    activity.AddTag("network.peer.port", ipEndPoint.Port.ToString());
                     break;
                 case DnsEndPoint dnsEndPoint:
-                    activity.AddTag("net.peer.name", dnsEndPoint.Host);
-                    activity.AddTag("net.peer.port", dnsEndPoint.Port.ToString());
+                    activity.AddTag("server.address", dnsEndPoint.Host);
+                    activity.AddTag("server.port", dnsEndPoint.Port.ToString());
                     break;
             }
 
@@ -107,7 +107,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                         activity.AddTag("exception.message", @event.Failure.Message);
                         activity.AddTag("exception.stacktrace", @event.Failure.StackTrace);
                     }
-   
+
                     activity.SetStatus(ActivityStatusCode.Error);
                     activity.Stop();
                 });
