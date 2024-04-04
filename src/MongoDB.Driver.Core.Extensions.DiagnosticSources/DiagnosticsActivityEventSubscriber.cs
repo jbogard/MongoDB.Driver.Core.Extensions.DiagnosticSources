@@ -86,8 +86,6 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 WithReplacedActivityCurrent(activity, () =>
                 {
-                    activity.AddTag("otel.status_code", "OK");
-                    activity.SetStatus(ActivityStatusCode.Ok);
                     activity.Stop();
                 });
             }
@@ -101,8 +99,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 {
                     if (activity.IsAllDataRequested)
                     {
-                        activity.AddTag("otel.status_code", "ERROR");
-                        activity.AddTag("otel.status_description", @event.Failure.Message);
+                        activity.SetStatus(ActivityStatusCode.Error, @event.Failure.Message);
                         activity.AddTag("exception.type", @event.Failure.GetType().FullName);
                         activity.AddTag("exception.message", @event.Failure.Message);
                         activity.AddTag("exception.stacktrace", @event.Failure.StackTrace);
