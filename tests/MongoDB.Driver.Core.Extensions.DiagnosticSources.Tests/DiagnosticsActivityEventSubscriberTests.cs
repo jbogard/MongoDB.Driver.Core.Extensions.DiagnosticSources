@@ -96,7 +96,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                    activity.Status.ShouldBe(ActivityStatusCode.Ok);
+                    activity.Status.ShouldBe(ActivityStatusCode.Unset);
                     stopFired = true;
                 }
             };
@@ -135,9 +135,6 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                    var statusTag = activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code");
-                    statusTag.ShouldNotBe(default);
-                    statusTag.Value.ShouldBe("ERROR");
                     activity.Status.ShouldBe(ActivityStatusCode.Error);
                     exceptionFired = true;
                 }
@@ -193,7 +190,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
                     activity.Tags.SingleOrDefault(t => t.Key == "server.address").Value.ShouldBe("localhost");
                     activity.Tags.SingleOrDefault(t => t.Key == "server.port").Value.ShouldBe("8000");
-                    activity.Tags.SingleOrDefault(t => t.Key == "otel.status_code").Value.ShouldBe("OK");
+                    activity.Status.ShouldBe(ActivityStatusCode.Unset);
 
                     stopFired = true;
                 }
