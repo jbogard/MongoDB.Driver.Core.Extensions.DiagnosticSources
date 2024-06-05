@@ -51,29 +51,32 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
             activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
 
-            activity.AddTag("db.system", "mongodb");
-            activity.AddTag("db.connection_id", @event.ConnectionId?.ToString());
-            activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
-            activity.AddTag("db.mongodb.collection", collectionName);
-            activity.AddTag("db.operation", @event.CommandName);
-            activity.AddTag("network.transport", "tcp");
+            if (activity.IsAllDataRequested)
+            {                
+                activity.AddTag("db.system", "mongodb");
+                activity.AddTag("db.connection_id", @event.ConnectionId?.ToString());
+                activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
+                activity.AddTag("db.mongodb.collection", collectionName);
+                activity.AddTag("db.operation", @event.CommandName);
+                activity.AddTag("network.transport", "tcp");
 
-            var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
-            switch (endPoint)
-            {
-                case IPEndPoint ipEndPoint:
-                    activity.AddTag("network.peer.address", ipEndPoint.Address.ToString());
-                    activity.AddTag("network.peer.port", ipEndPoint.Port.ToString());
-                    break;
-                case DnsEndPoint dnsEndPoint:
-                    activity.AddTag("server.address", dnsEndPoint.Host);
-                    activity.AddTag("server.port", dnsEndPoint.Port.ToString());
-                    break;
-            }
+                var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
+                switch (endPoint)
+                {
+                    case IPEndPoint ipEndPoint:
+                        activity.AddTag("network.peer.address", ipEndPoint.Address.ToString());
+                        activity.AddTag("network.peer.port", ipEndPoint.Port.ToString());
+                        break;
+                    case DnsEndPoint dnsEndPoint:
+                        activity.AddTag("server.address", dnsEndPoint.Host);
+                        activity.AddTag("server.port", dnsEndPoint.Port.ToString());
+                        break;
+                }
 
-            if (activity.IsAllDataRequested && _options.CaptureCommandText)
-            {
-                activity.AddTag("db.statement", @event.Command.ToString());
+                if (_options.CaptureCommandText)
+                {
+                    activity.AddTag("db.statement", @event.Command.ToString());
+                }
             }
 
             _activityMap.TryAdd(@event.RequestId, activity);
