@@ -113,6 +113,12 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         private static void WithReplacedActivityCurrent(Activity activity, Action action)
         {
             var current = Activity.Current;
+            if (activity == current)
+            {
+                action();
+                return;
+            }
+
             try
             {
                 Activity.Current = activity;
@@ -120,7 +126,14 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             }
             finally
             {
-                Activity.Current = current;
+                if (current?.IsStopped == true) // it's forbidden to assign stopped activity to Activity.Current
+                {
+                    Activity.Current = null;
+                }
+                else
+                {
+                    Activity.Current = current;
+                }
             }
         }
     }
