@@ -153,7 +153,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {"update", "my_collection"}
             });
             startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
-            stopEvent(new CommandFailedEvent("update", new Exception("Failed"), null, 1, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandFailedEvent("update", databaseNamespace, new Exception("Failed"), null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             exceptionFired.ShouldBeTrue();
@@ -210,7 +210,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {"update", "my_collection"}
             });
             startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
-            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandSucceededEvent("update", command, databaseNamespace, null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
@@ -258,7 +258,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             var connectionId = new ConnectionId(new ServerId(new ClusterId(), new DnsEndPoint("localhost", 8000)));
             var databaseNamespace = new DatabaseNamespace("test");
             startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
-            stopEvent(new CommandSucceededEvent("update", command, null, 1, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandSucceededEvent("update", command, databaseNamespace, null, 1, connectionId, TimeSpan.Zero));
 
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
@@ -298,8 +298,8 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             });
             startEvent(new CommandStartedEvent("update", updateCommand, databaseNamespace, null, 1, connectionId));
             startEvent(new CommandStartedEvent("insert", insertCommand, databaseNamespace, null, 2, connectionId));
-            stopEvent(new CommandSucceededEvent("update", updateCommand, null, 1, connectionId, TimeSpan.Zero));
-            stopEvent(new CommandSucceededEvent("insert", insertCommand, null, 2, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandSucceededEvent("update", updateCommand, databaseNamespace, null, 1, connectionId, TimeSpan.Zero));
+            stopEvent(new CommandSucceededEvent("insert", insertCommand, databaseNamespace, null, 2, connectionId, TimeSpan.Zero));
 
             outerActivity.Stop();
 
