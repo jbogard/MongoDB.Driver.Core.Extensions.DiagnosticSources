@@ -15,7 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MongoDB.Driver.Core" Version="[2.13.3,3.0)" />
+        <PackageReference Include="MongoDB.Driver.Core" Version="[2.28.0,3.0)" />
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
         <PackageReference Include="MinVer" Version="5.0.0" PrivateAssets="All" />
