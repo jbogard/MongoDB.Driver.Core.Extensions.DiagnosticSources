@@ -41,7 +41,7 @@ var mongoClient = new MongoClient(clientSettings);
 
 This package exposes an [`ActivitySource`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitysource?view=net-5.0) with a `Name` the same as the assembly, `MongoDB.Driver.Core.Extensions.DiagnosticSources`. Use this name in any [`ActivityListener`](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitylistener?view=net-5.0)-based listeners.
 
-All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md) are set.
+All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md) are set.
  
 This package supports MongoDB C# Driver versions 2.28.0 to 3.0.
 
