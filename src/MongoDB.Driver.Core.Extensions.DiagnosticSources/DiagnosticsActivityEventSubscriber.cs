@@ -46,16 +46,17 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 return;
             }
 
+            var databaseName = @event.DatabaseNamespace?.DatabaseName;
             var collectionName = @event.GetCollectionName();
 
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
-            activity.DisplayName = collectionName == null ? $"mongodb.{@event.CommandName}" : $"{collectionName}.{@event.CommandName}";
+            // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md
+            activity.DisplayName = string.IsNullOrEmpty(collectionName) ? $"{@event.CommandName} {databaseName}" : $"{@event.CommandName} {collectionName}";
 
             activity.AddTag("db.system", "mongodb");
             activity.AddTag("db.connection_id", @event.ConnectionId?.ToString());
-            activity.AddTag("db.name", @event.DatabaseNamespace?.DatabaseName);
-            activity.AddTag("db.mongodb.collection", collectionName);
-            activity.AddTag("db.operation", @event.CommandName);
+            activity.AddTag("db.namespace", databaseName);
+            activity.AddTag("db.collection.name", collectionName);
+            activity.AddTag("db.operation.name", @event.CommandName);
             activity.AddTag("network.transport", "tcp");
 
             var endPoint = @event.ConnectionId?.ServerId?.EndPoint;
@@ -73,7 +74,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
             if (activity.IsAllDataRequested && _options.CaptureCommandText)
             {
-                activity.AddTag("db.statement", @event.Command.ToString());
+                activity.AddTag("db.query.text", @event.Command.ToString());
             }
 
             _activityMap.TryAdd(@event.RequestId, activity);
@@ -96,14 +97,18 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
             {
                 WithReplacedActivityCurrent(activity, () =>
                 {
-                    if (activity.IsAllDataRequested)
+                    var tags = new ActivityTagsCollection
                     {
-                        activity.SetStatus(ActivityStatusCode.Error, @event.Failure.Message);
-                        activity.AddTag("exception.type", @event.Failure.GetType().FullName);
-                        activity.AddTag("exception.message", @event.Failure.Message);
-                        activity.AddTag("exception.stacktrace", @event.Failure.StackTrace);
+                        { "exception.type", @event.Failure.GetType().FullName },
+                        { "exception.stacktrace", @event.Failure.ToString() },
+                    };
+
+                    if (!string.IsNullOrEmpty(@event.Failure.Message))
+                    {
+                        tags.Add("exception.message", @event.Failure.Message);
                     }
 
+                    activity.AddEvent(new ActivityEvent("exception", DateTimeOffset.UtcNow, tags));
                     activity.SetStatus(ActivityStatusCode.Error);
                     activity.Stop();
                 });
