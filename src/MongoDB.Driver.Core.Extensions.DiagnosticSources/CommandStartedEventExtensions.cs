@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Frozen;
 using MongoDB.Driver.Core.Events;
 
 namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 {
     public static class CommandStartedEventExtensions
     {
-        private static readonly HashSet<string> CommandsWithCollectionNameAsValue =
+        private static readonly FrozenSet<string> CommandsWithCollectionNameAsValue =
             new HashSet<string>
             {
                 "aggregate",
@@ -23,7 +24,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
                 "drop",
                 "createIndexes",
                 "listIndexes"
-            };
+            }.ToFrozenSet();
 
         public static string GetCollectionName(this CommandStartedEvent @event)
         {
