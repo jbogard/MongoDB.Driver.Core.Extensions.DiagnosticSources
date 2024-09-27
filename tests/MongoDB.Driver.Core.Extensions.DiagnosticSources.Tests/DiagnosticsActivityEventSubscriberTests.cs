@@ -179,15 +179,15 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                    var instanceTag = activity.Tags.SingleOrDefault(t => t.Key == "db.name");
+                    var instanceTag = activity.Tags.SingleOrDefault(t => t.Key == "db.namespace");
                     instanceTag.ShouldNotBe(default);
                     instanceTag.Value.ShouldBe("test");
 
                     activity.Tags.SingleOrDefault(t => t.Key == "db.system").Value.ShouldBe("mongodb");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.connection_id").Value.ShouldBe("{ ServerId : { ClusterId : 42, EndPoint : \"Unspecified/localhost:8000\" }, LocalValue : 43 }");
-                    activity.Tags.SingleOrDefault(t => t.Key == "db.mongodb.collection").Value.ShouldBe("my_collection");
-                    activity.Tags.SingleOrDefault(t => t.Key == "db.operation").Value.ShouldBe("update");
-                    activity.Tags.SingleOrDefault(t => t.Key == "db.statement").ShouldBe(default);
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.collection.name").Value.ShouldBe("my_collection");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.operation.name").Value.ShouldBe("update");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.query.text").ShouldBe(default);
                     activity.Tags.SingleOrDefault(t => t.Key == "server.address").Value.ShouldBe("localhost");
                     activity.Tags.SingleOrDefault(t => t.Key == "server.port").Value.ShouldBe("8000");
                     activity.Status.ShouldBe(ActivityStatusCode.Unset);
@@ -240,7 +240,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
-                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.statement");
+                    var statementTag = activity.Tags.SingleOrDefault(t => t.Key == "db.query.text");
                     statementTag.ShouldNotBe(default);
                     statementTag.Value.ShouldBe(command.ToString());
 
