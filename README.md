@@ -43,5 +43,5 @@ This package exposes an [`ActivitySource`](https://docs.microsoft.com/en-us/dotn
 
 All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md) are set.
  
-This package supports MongoDB C# Driver versions 2.28.0 to 3.0.
+This package supports MongoDB C# Driver versions 3.0.0 and above.
 
