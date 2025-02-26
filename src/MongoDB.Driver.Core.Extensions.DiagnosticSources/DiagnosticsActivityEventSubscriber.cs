@@ -84,9 +84,9 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                WithReplacedActivityCurrent(activity, () =>
+                WithReplacedActivityCurrent(activity, @event, static (a, _) =>
                 {
-                    activity.Stop();
+                    a.Stop();
                 });
             }
         }
@@ -95,39 +95,39 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
         {
             if (_activityMap.TryRemove(@event.RequestId, out var activity))
             {
-                WithReplacedActivityCurrent(activity, () =>
+                WithReplacedActivityCurrent(activity, @event, static (a, e) =>
                 {
                     var tags = new ActivityTagsCollection
                     {
-                        { "exception.type", @event.Failure.GetType().FullName },
-                        { "exception.stacktrace", @event.Failure.ToString() },
+                        { "exception.type", e.Failure.GetType().FullName },
+                        { "exception.stacktrace", e.Failure.ToString() },
                     };
 
-                    if (!string.IsNullOrEmpty(@event.Failure.Message))
+                    if (!string.IsNullOrEmpty(e.Failure.Message))
                     {
-                        tags.Add("exception.message", @event.Failure.Message);
+                        tags.Add("exception.message", e.Failure.Message);
                     }
 
-                    activity.AddEvent(new ActivityEvent("exception", DateTimeOffset.UtcNow, tags));
-                    activity.SetStatus(ActivityStatusCode.Error);
-                    activity.Stop();
+                    a.AddEvent(new ActivityEvent("exception", DateTimeOffset.UtcNow, tags));
+                    a.SetStatus(ActivityStatusCode.Error);
+                    a.Stop();
                 });
             }
         }
 
-        private static void WithReplacedActivityCurrent(Activity activity, Action action)
+        private static void WithReplacedActivityCurrent<TEvent>(Activity activity, TEvent @event, Action<Activity, TEvent> action)
         {
             var current = Activity.Current;
             if (activity == current)
             {
-                action();
+                action(activity, @event);
                 return;
             }
 
             try
             {
                 Activity.Current = activity;
-                action();
+                action(activity, @event);
             }
             finally
             {
