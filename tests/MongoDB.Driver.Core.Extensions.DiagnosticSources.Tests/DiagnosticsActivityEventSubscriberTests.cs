@@ -135,6 +135,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                 {
                     activity.ShouldNotBeNull();
                     activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    activity.Events.ShouldNotBeEmpty();
                     activity.Status.ShouldBe(ActivityStatusCode.Error);
                     exceptionFired = true;
                 }
@@ -160,6 +161,99 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             Activity.Current.ShouldBeNull();
         }
 
+        [Fact]
+        public void Should_not_record_tags_when_not_all_data()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    activity.Tags.ShouldBeEmpty();
+                    activity.Status.ShouldBe(ActivityStatusCode.Unset);
+
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {CaptureCommandText = false};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandSucceededEvent>(out var stopEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(42), new DnsEndPoint("localhost", 8000)), 43);
+            var databaseNamespace = new DatabaseNamespace("test");
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            stopEvent(new CommandSucceededEvent("update", command, databaseNamespace, null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }
+        
+        [Fact]
+        public void Should_not_record_tags_when_not_all_data_activity_error()
+        {
+            var stopFired = false;
+            var startFired = false;
+
+            using var listener = new ActivityListener
+            {
+                ShouldListenTo = source => source.Name == "MongoDB.Driver.Core.Extensions.DiagnosticSources",
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+                ActivityStarted = activity =>
+                {
+                    startFired = true;
+                    activity.ShouldNotBeNull();
+                },
+                ActivityStopped = activity =>
+                {
+                    activity.ShouldNotBeNull();
+                    activity.OperationName.ShouldBe(DiagnosticsActivityEventSubscriber.ActivityName);
+                    activity.Tags.ShouldBeEmpty();
+                    activity.Events.ShouldBeEmpty();
+                    activity.Status.ShouldBe(ActivityStatusCode.Error);
+
+                    stopFired = true;
+                }
+            };
+            ActivitySource.AddActivityListener(listener);
+
+            var options = new InstrumentationOptions {CaptureCommandText = false};
+            var behavior = new DiagnosticsActivityEventSubscriber(options);
+
+            behavior.TryGetEventHandler<CommandStartedEvent>(out var startEvent).ShouldBeTrue();
+            behavior.TryGetEventHandler<CommandFailedEvent>(out var failEvent).ShouldBeTrue();
+
+            var connectionId = new ConnectionId(new ServerId(new ClusterId(42), new DnsEndPoint("localhost", 8000)), 43);
+            var databaseNamespace = new DatabaseNamespace("test");
+            var command = new BsonDocument(new Dictionary<string, object>
+            {
+                {"update", "my_collection"}
+            });
+            startEvent(new CommandStartedEvent("update", command, databaseNamespace, null, 1, connectionId));
+            failEvent(new CommandFailedEvent("update", databaseNamespace, new InvalidOperationException(), null, 1, connectionId, TimeSpan.Zero));
+
+            startFired.ShouldBeTrue();
+            stopFired.ShouldBeTrue();
+        }
+        
         [Fact]
         public void Should_record_all_data()
         {
