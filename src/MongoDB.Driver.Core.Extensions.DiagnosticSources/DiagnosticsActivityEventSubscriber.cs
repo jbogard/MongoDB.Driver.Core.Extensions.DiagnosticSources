@@ -11,7 +11,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
     {
         private readonly InstrumentationOptions _options;
         internal static readonly AssemblyName AssemblyName = typeof(DiagnosticsActivityEventSubscriber).Assembly.GetName();
-        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        public static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, SignalVersionHelper.GetVersion<DiagnosticsActivityEventSubscriber>());
 
         public const string ActivityName = "MongoDB.Driver.Core.Events.Command";
