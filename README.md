@@ -5,6 +5,8 @@
 [![NuGet](https://img.shields.io/nuget/vpre/MongoDB.Driver.Core.Extensions.DiagnosticSources.svg)](https://www.nuget.org/packages/MongoDB.Driver.Core.Extensions.DiagnosticSources)
 [![MyGet (dev)](https://img.shields.io/myget/jbogard-ci/v/MongoDB.Driver.Core.Extensions.DiagnosticSources.svg)](https://myget.org/gallery/jbogard-ci)
 
+This package supports MongoDB C# Driver versions 3.0.0 and above.
+
 ## Usage
 
 This repo includes the package:
@@ -43,5 +45,21 @@ This package exposes an [`ActivitySource`](https://docs.microsoft.com/en-us/dotn
 
 All the available [OpenTelemetry semantic tags](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/database/database-spans.md) are set.
  
-This package supports MongoDB C# Driver versions 3.0.0 and above.
+### Usage with OpenTelemetry
 
+To add the listener for the OpenTelemetry SDK, add your listener in the OpenTelemetry tracing configuration, usually configured with the [OpenTelemetry.Extensions.Hosting](https://www.nuget.org/packages/OpenTelemetry.Extensions.Hosting) package:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    // Metrics, logging etc.
+    .WithTracing(tracing =>
+    {
+        // Other tracing configuration
+
+        tracing
+            // Other sources (ASP.NET Core, HttpClient etc.)
+            .AddSource("MongoDB.Driver.Core.Extensions.DiagnosticSources");
+    });
+```
+
+This can also be added with the OpenTelemetry SDK directly.
