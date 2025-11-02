@@ -206,7 +206,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
         }
-        
+
         [Fact]
         public void Should_not_record_tags_when_not_all_data_activity_error()
         {
@@ -253,7 +253,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
             startFired.ShouldBeTrue();
             stopFired.ShouldBeTrue();
         }
-        
+
         [Fact]
         public void Should_record_all_data()
         {
@@ -277,7 +277,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources.Tests
                     instanceTag.ShouldNotBe(default);
                     instanceTag.Value.ShouldBe("test");
 
-                    activity.Tags.SingleOrDefault(t => t.Key == "db.system").Value.ShouldBe("mongodb");
+                    activity.Tags.SingleOrDefault(t => t.Key == "db.system.name").Value.ShouldBe("mongodb");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.connection_id").Value.ShouldBe("{ ServerId : { ClusterId : 42, EndPoint : \"Unspecified/localhost:8000\" }, LocalValue : 43 }");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.collection.name").Value.ShouldBe("my_collection");
                     activity.Tags.SingleOrDefault(t => t.Key == "db.operation.name").Value.ShouldBe("update");
