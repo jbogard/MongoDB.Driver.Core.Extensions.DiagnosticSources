@@ -53,7 +53,7 @@ namespace MongoDB.Driver.Core.Extensions.DiagnosticSources
 
             if (activity is { IsAllDataRequested: true })
             {
-                activity.AddTag("db.system", "mongodb");
+                activity.AddTag("db.system.name", "mongodb");
                 activity.AddTag("db.connection_id", @event.ConnectionId?.ToString());
                 activity.AddTag("db.namespace", databaseName);
                 activity.AddTag("db.collection.name", collectionName);
